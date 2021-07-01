@@ -1,16 +1,35 @@
-import { useState } from 'react';
-import { connect } from 'react-redux';
+import { useRef, useState } from "react";
+import { connect } from "react-redux";
 
-import classes from './AddTask.module.css';
-import * as actions from '../../../store/actions/index';
+import classes from "./AddTask.module.css";
+import * as actions from "../../../store/actions/index";
 
 const AddTask = ({ onAddNewTask }) => {
-  const [taskTitle, setTaskTitle] = useState('');
-  const [scheduleAt, setScheduleAt] = useState('');
+  const [taskTitle, setTaskTitle] = useState("");
   const [reminder, setReminder] = useState(false);
+  const scheduleRef = useRef(null);
+
+  // Add and change date value
+  function changeScheduleHandler(e) {
+    if (e.keyCode === 8) {
+      return;
+    }
+    const withoutDash = e.target.value.split("-").join("");
+
+    if (!/^\d*$/.test(withoutDash)) {
+      scheduleRef.current.value = e.target.value.slice(0, -1);
+      return;
+    }
+
+    scheduleRef.current.value = withoutDash.replace(
+      /^(\d{2})-?(\d{2})?-?(\d*)$/,
+      (m, a, b, c) => (b ? a + "-" + b + "-" + c : a + "-" + c)
+    );
+  }
 
   const onSubmitNewTaskHandler = (event) => {
     event.preventDefault();
+    const scheduleAt = scheduleRef.current.value;
 
     if (!taskTitle && !scheduleAt) {
       return;
@@ -21,8 +40,8 @@ const AddTask = ({ onAddNewTask }) => {
       scheduleAt: scheduleAt,
       reminder: reminder,
     });
-    setTaskTitle('');
-    setScheduleAt('');
+    setTaskTitle("");
+    scheduleRef.current.value = "";
     setReminder(false);
   };
 
@@ -44,9 +63,9 @@ const AddTask = ({ onAddNewTask }) => {
         <label>Schedule At</label>
         <input
           type="text"
-          value={scheduleAt}
-          placeholder="ScheduledAt"
-          onChange={(e) => setScheduleAt(e.target.value)}
+          placeholder="DD-MM-YYYY"
+          ref={scheduleRef}
+          onKeyUp={changeScheduleHandler}
         />
       </div>
       <div className={`${classes.FormControl} ${classes.FormControlCheck}`}>
